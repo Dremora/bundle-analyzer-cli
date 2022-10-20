@@ -1,0 +1,15 @@
+{
+  "name": "bundle-analyzer-cli",
+  "version": "1.0.0",
+  "description": "CLI for the Webpack Bundle Analyzer",
+  "bin": "index.js",
+  "scripts": {},
+  "keywords": [
+    "webpack"
+  ],
+  "author": "Kirill Korolyov <kirill.korolyov@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
