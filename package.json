@@ -1,11 +1,12 @@
 {
-  "name": "bundle-analyzer-cli",
+  "name": "bundle-dependency-analyzer",
   "version": "1.0.0",
-  "description": "CLI for the Webpack Bundle Analyzer",
+  "description": "Dependency breakdown for the Webpack Bundle Analyzer",
   "bin": "index.js",
   "scripts": {},
   "keywords": [
-    "webpack"
+    "webpack",
+    "next.js"
   ],
   "author": "Kirill Korolyov <kirill.korolyov@gmail.com>",
   "license": "MIT",

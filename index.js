@@ -7,14 +7,15 @@ const yellow = "\x1b[33m";
 const red = "\x1b[31m";
 const reset = "\x1b[0m";
 
-const ROOT = process.env.ROOT || ".";
-const bundlePath = path.join(ROOT, ".next/analyze/client.html");
+const bundlePath = process.env.ANALYZE_HTML || ".next/analyze/client.html";
 
 console.log(`Analyzing browser bundle from ${bundlePath}.`);
 
 console.log(
   "Sizes shown are for minified and tree-shaken files (before compression)."
 );
+
+const isPnpm = process.env.PNPM === "true";
 
 const chartDataRegex =
   /<script>\s+window\.chartData = (.*);\s+window\.defaultSizes/;
@@ -52,7 +53,12 @@ const items = allItems
       { path: submodules ? `.${submodules}` : concatenated, size: item.size },
     ];
   })
-  .filter((x) => x.path.includes("./node_modules/.pnpm/"))
+  .filter((x) =>
+    isPnpm
+      ? x.path.includes("./node_modules/.pnpm/")
+      : x.path.includes("./node_modules/")
+  )
+  .filter((x) => !x.path.endsWith(" (ignored)"))
   // bundle analyzer produces incorrect paths to node_modules when target is
   // a different directory than the root
   .map((item) => ({
@@ -65,7 +71,7 @@ items.forEach((item) => {
     throw new Error(`${item.path} does not exist`);
   }
 
-  if (!item.path.startsWith("./node_modules/.pnpm/")) {
+  if (isPnpm && !item.path.startsWith("./node_modules/.pnpm/")) {
     throw new Error(`${item.path} is not in the node_modules directory`);
   }
 
@@ -74,20 +80,27 @@ items.forEach((item) => {
   }
 });
 
-const itemRegex =
-  /(\.\/node_modules\/\.pnpm\/([@\.A-Za-z0-9-+_]+)\/node_modules\/(((@[\.A-Za-z0-9-+_]+)\/([\.A-Za-z0-9-+_]+))|([\.A-Za-z0-9-+_]+)))/;
+const itemRegex = isPnpm
+  ? /(\.\/node_modules\/\.pnpm\/([@\.A-Za-z0-9-+_]+)\/node_modules\/(((@[\.A-Za-z0-9-+_]+)\/([\.A-Za-z0-9-+_]+))|([\.A-Za-z0-9-+_]+)))/
+  : /(\.\/node_modules\/(((@[\.A-Za-z0-9-+_]+)\/([\.A-Za-z0-9-+_]+))|([\.A-Za-z0-9-+_]+)))/;
 
 const filesByPackage = groupBy(items, (item) => {
   return itemRegex.exec(item.path)[0];
 });
 
 const packageWithVersions = Object.keys(filesByPackage).map((path) => {
-  const packageJson = JSON.parse(
-    fs.readFileSync(path + "/package.json", "utf8")
-  );
+  let name, version;
+  try {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path + "/package.json", "utf8")
+    );
 
-  const version = packageJson.version;
-  const name = packageJson.name;
+    version = packageJson.version;
+    name = packageJson.name;
+  } catch (e) {
+    name = path;
+    version = "(unknown)";
+  }
 
   return {
     path,
